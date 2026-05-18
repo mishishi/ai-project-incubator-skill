@@ -1,15 +1,9 @@
 ---
 name: ai-project-incubator
-description: "AI 项目孵化器：每天凌晨自动头脑风暴一个 Idea，完成设计文档、SPEC、Plan，最终交付一个响应式 Web 应用。前端必须使用 ui-ux-pro-max 设计 UX，技术栈为 React + TypeScript + Vite + Tailwind v4，后端用 Fastify（如需要）。"
+description: "AI 项目孵化器：从 Idea 到上线交付，完整跑通市场调研→设计系统→SPEC→开发→部署的 Web 应用孵化流程。前端 React+TS+Vite+Tailwind，部署到 https://openginko.tech/{project-name}/"
 metadata:
-  version: "2.2.0"
-  lastUpdated: "2026-05-18"
-  changelog:
-    - "2.2.0: Showcase SVG 双尺寸支持（首页 361×170 / 弹窗 511×220），Terminal + Neon 风格，generate-card-svg.sh 支持 card/modal 双模式"
-    - "1.3.0: 新增能力边界强制执行、知识回流强制机制、最小交付底线技术验证、质量评分自动化、暂停开关"
-    - "1.2.0: 新增放弃规则、最小交付底线、能力边界、强制知识回流、skeleton可运行示例、日志自动分析"
-    - "1.1.0: 新增Phase0预检、状态锁文件、质量评分、依赖声明、版本标识、cron消息规范、项目保留策略"
-    - "1.0.0: 初始版本"
+  version: "3.0.0"
+  lastUpdated: "2026-05-19"
   dependsOn:
     - skill: ui-ux-pro-max
       reason: "design_system.py 生成设计 token"
@@ -34,37 +28,30 @@ metadata:
 
 # AI 项目孵化器
 
-每天凌晨 00:00 自动运行，从市场调研到产品交付，完整跑通一个 AI 项目的孵化流程。
-
-**子 agent 执行模式**：Phase 工作 + runner.sh 验证交替执行
+## 命令参考
 
 ```bash
-# 子 agent 每步完成后调用 runner.sh 验证
+# 子 agent 调用 runner.sh 驱动完整流程
 bash /root/.openclaw/workspace/skills/ai-project-incubator/scripts/runner.sh {project-name} setup
-# 子 agent 做 Phase 1 工作（调研 + 头脑风暴）...
 bash /root/.openclaw/workspace/skills/ai-project-incubator/scripts/runner.sh {project-name} verify-phase1
-# 子 agent 做 Phase 2 工作（设计系统）...
 bash /root/.openclaw/workspace/skills/ai-project-incubator/scripts/runner.sh {project-name} verify-phase2
-# 子 agent 做 Phase 3 工作（SPEC + Plan）...
 bash /root/.openclaw/workspace/skills/ai-project-incubator/scripts/runner.sh {project-name} verify-phase3
-# 子 agent 做 Phase 4 工作（开发）...
 bash /root/.openclaw/workspace/skills/ai-project-incubator/scripts/runner.sh {project-name} build
 bash /root/.openclaw/workspace/skills/ai-project-incubator/scripts/runner.sh {project-name} deploy
-bash /root/.openclaw/workspace/skills/ai-project-incubator/scripts/runner.sh {project-name} score
-bash /root/.openclaw/workspace/skills/ai-project-incubator/scripts/runner.sh {project-name} notify success
+
+# 一键孵化（完整流程，build 失败则 abort）
+bash /root/.openclaw/workspace/skills/ai-project-incubator/scripts/runner.sh {project-name} incubate
 ```
 
-**runner.sh 验证命令说明**：
 | 命令 | 验证内容 | 失败行为 |
 |------|---------|---------|
-| `runner.sh X setup` | skeleton 复制成功 | 退出码 1 |
-| `runner.sh X verify-phase1` | research.md ≥ 100字节 | 退出码 1 |
-| `runner.sh X verify-phase2` | design-system.md ≥ 200字节 | 退出码 1 |
-| `runner.sh X verify-phase3` | SPEC.md + PLAN.md ≥ 100字节 | 退出码 1 |
-| `runner.sh X build` | npm run build 成功 + 超时检查 | 退出码 1 |
-| `runner.sh X deploy` | HTTP 200 + 路径检查 | 退出码 1 |
-
-**子 agent 只需要调用这些命令**，不需要自己写验证脚本。
+| `setup` | skeleton 复制成功 | 退出码 1 |
+| `verify-phase1` | research.md ≥ 100字节 | 退出码 1 |
+| `verify-phase2` | design-system.md ≥ 200字节 | 退出码 1 |
+| `verify-phase3` | SPEC.md + PLAN.md ≥ 100字节 | 退出码 1 |
+| `build` | npm run build 成功 | 退出码 1，abort 后续流程 |
+| `deploy` | HTTP 200 + dist/ 存在 | 退出码 1 |
+| `incubate` | 依次执行 setup → verify-phase1~3 → build → deploy | 任意失败 abort |
 
 ---
 
@@ -72,43 +59,25 @@ bash /root/.openclaw/workspace/skills/ai-project-incubator/scripts/runner.sh {pr
 
 ```
 /root/.openclaw/workspace/skills/ai-project-incubator/scripts/
-├── runner.sh          # 主入口（全流程自动化，子 agent 执行这个）
-├── preflight.sh      # Phase 0：预检 + 暂停开关 + 锁文件 + 能力边界预扫描
-├── verify-outputs.sh # Phase 1-3 输出验证（文件存在 + 最小字节数）
-├── build.sh          # Phase 4：构建 + 超时检查 + 失败重试
-├── deploy.sh         # Phase 4：部署 + HTTP 验证
-├── auto-score.sh      # 后置：自动化质量评分
-└── update-kb.sh      # 后置：KB.md 强制更新
+├── runner.sh              # 主入口（子 agent 调用这个）
+├── build.sh               # npm build + 重试逻辑（runner.sh build 调用）
+├── deploy.sh              # 部署 + HTTP 验证 + 移动到 incubated/（runner.sh deploy 调用）
+├── verify-outputs.sh       # 文件存在性验证（子 agent 可选调用）
+├── preflight.sh            # Phase 0：暂停开关/锁文件/能力边界预扫描
+├── collect-showcase.sh     # 扫描 incubated/ 生成 showcase/projects.json
+├── generate-card-svg.sh    # 生成 Showcase SVG 展示卡片
+├── auto-score.sh           # 部署后质量评分
+├── update-kb.sh            # 孵化完成后更新 KB.md
+├── parse-access-log.sh     # 解析 nginx access.log
+├── gen-stats.sh            # 生成 Showcase 统计 JSON
+├── verify-page.js          # puppeteer 冒烟测试脚本（deploy.sh 调用）
+├── screenshot.sh            # （已废弃，不使用）
+└── package.json            # puppeteer 依赖（npm install 后使用）
 ```
 
 ---
 
-## 孵化流程
-
-### Phase 0：预检（自动执行）
-
----
-
-## 环境变量（子 agent 执行前必须配置）
-
-| 变量 | 值 | 说明 |
-|------|-----|------|
-| `TAVILY_API_KEY` | `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` | Tavily 搜索 API |
-
----
-
-`preflight.sh` 自动完成以下检查，任意一步失败则终止：
-
-| 检查项 | 失败行为 |
-|--------|---------|
-| 暂停开关 `/root/.openclaw/incubator.paused` 存在 | 跳过本次孵化（退出码 0，不通知）|
-| 锁文件 `/root/.openclaw/incubator.lock` 存在且上一个任务仍在跑 | 跳过本次孵化（退出码 0，不通知）|
-| Nginx 配置有效 | 记录错误，终止 |
-| 部署目录可写 | 记录错误，终止 |
-| SKILL.md 和 skeleton 存在 | 记录错误，终止 |
-| 能力边界预扫描（付费 API / 系统文件修改 / Nginx 修改）| 违规直接终止并通知 |
-
----
+## 工作流程
 
 ### Phase 1：市场调研 + 头脑风暴（时间盒：25 分钟）
 
@@ -116,7 +85,7 @@ bash /root/.openclaw/workspace/skills/ai-project-incubator/scripts/runner.sh {pr
 
 **第 1 轮 — 趋势扫描（5 分钟）**
 1. 调用 `openclaw-tavily-search` 搜索最近 7 天 AI 工具发布/论文/开源项目
-2. 从搜索结果中提取 3 条具体趋势，每条注明来源（如 "来源：ProductHunt 2026" 或类似）
+2. 从搜索结果中提取 3 条具体趋势，每条注明来源（如 "来源：ProductHunt 2026"）
 3. 头脑风暴 3 个可行方向
 
 **第 2 轮 — 竞品深挖（8 分钟）**
@@ -133,7 +102,7 @@ bash /root/.openclaw/workspace/skills/ai-project-incubator/scripts/runner.sh {pr
 **第 4 轮 — 输出整理（5 分钟）**
 1. 按格式输出 `research.md`
 
-**`research.md` 输出格式规范**（子 agent 必须遵循，以便孵化日志解析器提取结构化数据）：
+**`research.md` 输出格式规范**（子 agent 必须遵循）：
 
 ```markdown
 ## 市场数据
@@ -160,15 +129,9 @@ bash /root/.openclaw/workspace/skills/ai-project-incubator/scripts/runner.sh {pr
 - 每个竞品必须包含定价信息
 - 输出必须包含中文文字
 
-**完成后**：`verify-outputs.sh` 验证 `research.md` 包含：
-- 市场规模数据（含 $ 或 %）
-- 至少 3 个竞品（含定价）
-- 至少 3 条趋势（含来源）
-- 目标用户描述
+完成后：子 agent 可选调用 `verify-outputs.sh` 自检，或直接用 `runner.sh verify-phase1` 验证。
 
-如验证不通过，迭代优化 `research.md` 直到通过（最多 2 轮自检）
-
-**⚠️ 放弃条件**（满足任一则停止）：
+**放弃条件**（满足任一则停止）：
 - 找不到任何可行方向
 - 竞品分析后市场规模明显不足（无可衡量数据）
 - 方向需要 skill 范围外的技术栈
@@ -185,7 +148,7 @@ bash /root/.openclaw/workspace/skills/ai-project-incubator/scripts/runner.sh {pr
 3. 按自检清单逐项检查（6 项），最多 3 轮
 4. 输出 `design-system.md`
 
-**`design-system.md` 输出格式规范**（子 agent 必须遵循）：
+**`design-system.md` 输出格式规范**：
 
 ```markdown
 ## 设计方向
@@ -209,9 +172,9 @@ bash /root/.openclaw/workspace/skills/ai-project-incubator/scripts/runner.sh {pr
 - 颜色 Token 用 `--color-name` 格式（如 `--color-accent`）
 - 输出必须包含中文文字
 
-**完成后**：`verify-outputs.sh` 验证 `design-system.md` ≥ 200 字节
+完成后：用 `runner.sh verify-phase2` 验证 ≥ 200 字节。
 
-**⚠️ 放弃条件**：自检 3 轮后仍有 token 不符合规范
+**放弃条件**：自检 3 轮后仍有 token 不符合规范
 
 ---
 
@@ -223,7 +186,7 @@ bash /root/.openclaw/workspace/skills/ai-project-incubator/scripts/runner.sh {pr
 3. 按后端决策规则判断是否需要后端
 4. 输出 `SPEC.md` + `PLAN.md`
 
-**`SPEC.md` 输出格式规范**（子 agent 必须遵循）：
+**`SPEC.md` 输出格式规范**：
 
 ```markdown
 ## 产品概述
@@ -240,7 +203,7 @@ bash /root/.openclaw/workspace/skills/ai-project-incubator/scripts/runner.sh {pr
 <一句话功能描述>
 ```
 
-**`PLAN.md` 输出格式规范**（子 agent 必须遵循）：
+**`PLAN.md` 输出格式规范**：
 
 ```markdown
 ## 开发步骤
@@ -266,7 +229,7 @@ bash /root/.openclaw/workspace/skills/ai-project-incubator/scripts/runner.sh {pr
 - PLAN.md 里程碑用表格格式（含 M1/M2 等标记）
 - 所有输出必须包含中文文字
 
-**完成后**：`verify-outputs.sh` 验证两者 ≥ 100 字节
+完成后：用 `runner.sh verify-phase3` 验证两者 ≥ 100 字节。
 
 **简化决策**（Phase 4 超时 45 分钟时启用）：
 - 减少非核心功能
@@ -280,28 +243,14 @@ bash /root/.openclaw/workspace/skills/ai-project-incubator/scripts/runner.sh {pr
 
 **子 agent 负责执行**：
 1. 开发核心功能（使用 design-system.md token）
-2. 调用 `bash runner.sh {project-name} incubate` — 一键完成 verify → build → deploy
+2. 调用 `bash runner.sh {project-name} build` — 构建 + 重试
+3. 调用 `bash runner.sh {project-name} deploy` — 部署 + HTTP 验证
 
-**⚠️ 禁止使用 playwright-mcp**（存在进程泄漏，会在凌晨自动化环境中持续累积残留进程）
+**build 失败则 abort**，不会继续 deploy。
 
-**完成后**：curl 验证 `https://openginko.tech/{project-name}/` 返回 HTTP 200
+**⚠️ 禁止使用 playwright-mcp**（存在进程泄漏）
 
----
-
-## 暂停开关
-
-**人工干预**：无需修改 cron，直接文件系统控制。
-
-```bash
-# 暂停（跳过本次孵化）
-touch /root/.openclaw/incubator.paused
-
-# 恢复
-rm /root/.openclaw/incubator.paused
-
-# 查看状态
-[ -f /root/.openclaw/incubator.paused ] && echo "⏸ PAUSED" || echo "▶ ACTIVE"
-```
+完成后：curl 验证 `https://openginko.tech/{project-name}/` 返回 HTTP 200
 
 ---
 
@@ -319,7 +268,7 @@ rm /root/.openclaw/incubator.paused
 
 **字体**：标题 Lora（衬线）/ 界面 Inter / 等宽 Fira Code
 
-**按钮**：`rounded-xl` + `transition-colors duration-150`，其他规范见设计系统文件
+**按钮**：`rounded-xl` + `transition-colors duration-150`
 
 **去 Emoji**：所有图标用 Lucide SVG 或内联 SVG
 
@@ -351,24 +300,20 @@ rm /root/.openclaw/incubator.paused
 
 ---
 
-## 监控与日志
+## 暂停开关
 
-日志文件：`/root/.openclaw/logs/incubator.log`
+**人工干预**：无需修改 cron，直接文件系统控制。
 
-记录内容：
-- Phase 开始/完成时间
-- 暂停开关 / 锁文件跳过事件
-- 能力边界警告
-- build/deploy 失败及重试
-- 自动化评分结果
+```bash
+# 暂停（跳过本次孵化）
+touch /root/.openclaw/incubator.paused
 
----
+# 恢复
+rm /root/.openclaw/incubator.paused
 
-## 知识回流（强制）
-
-**KB.md 位置**：`/root/.openclaw/workspace/skills/ai-project-incubator/KB.md`
-
-每次孵化完成（成功或失败），`update-kb.sh` 自动追加当天日期条目。子 agent 应主动将新发现的问题追加到 KB.md 对应分类（已知问题 / 设计经验 / 开发陷阱）。
+# 查看状态
+[ -f /root/.openclaw/incubator.paused ] && echo "PAUSED" || echo "ACTIVE"
+```
 
 ---
 
@@ -380,11 +325,11 @@ rm /root/.openclaw/incubator.paused
 ├── design-system.md   # 设计系统 token
 ├── SPEC.md            # 功能规格
 ├── PLAN.md            # 开发计划
+├── metadata.json      # Showcase 必须文件
 ├── src/               # React 前端
 │   ├── i18n/          # 国际化
 │   ├── OnboardingGuide.tsx  # 新手指引（如有）
 │   └── ...
-├── server/            # Fastify 后端（如有）
 └── dist/              # 构建产物
 ```
 
@@ -392,7 +337,7 @@ Nginx 部署路径：`/usr/share/nginx/html/{project-name}/`
 
 ### metadata.json（Showcase 必须）
 
-每个孵化的项目必须在根目录包含 `metadata.json`，供 Showcase 展示页面自动采集：
+每个孵化的项目必须在根目录包含 `metadata.json`：
 
 ```json
 {
@@ -403,28 +348,26 @@ Nginx 部署路径：`/usr/share/nginx/html/{project-name}/`
   "features": ["功能1", "功能2", "功能3"],
   "incubatedAt": "YYYY-MM-DD",
   "screenshot": "screenshot.png"
+}
+```
 
 子 agent 在 Phase 4 开发完成后负责创建此文件。
 
-### Showcase SVG 卡片
+---
 
-部署完成后，runner.sh 自动调用 `generate-card-svg.sh` 生成 Terminal + Neon 风格的 SVG 展示卡片（无需子 agent 干预）：
+## Showcase 数据更新
 
-```bash
-# 生成首页卡片 SVG（默认 361×170）
-bash /root/.openclaw/workspace/skills/ai-project-incubator/scripts/generate-card-svg.sh {project-name} card
+**SVG 展示卡片**：deploy 时自动生成（card 361×170 / modal 511×220），无需子 agent 干预。
 
-# 生成弹窗大图 SVG（511×220）
-bash /root/.openclaw/workspace/skills/ai-project-incubator/scripts/generate-card-svg.sh {project-name} modal
-```
+**Showcase 项目列表**：deploy 后自动调用 `collect-showcase.sh` 更新 `showcase/projects.json`。
 
-### Showcase 采集
+---
 
-部署完成后，运行采集脚本更新 Showcase 数据：
+## 知识回流
 
-```bash
-bash /root/.openclaw/workspace/skills/ai-project-incubator/scripts/collect-showcase.sh
-```
+**KB.md 位置**：`/root/.openclaw/workspace/skills/ai-project-incubator/KB.md`
+
+每次孵化完成（成功或失败），`update-kb.sh` 自动追加当天日期条目。子 agent 应主动将新发现的问题追加到 KB.md 对应分类（已知问题 / 设计经验 / 开发陷阱）。
 
 ---
 
@@ -453,60 +396,15 @@ bash /root/.openclaw/workspace/skills/ai-project-incubator/scripts/collect-showc
 
 ---
 
-## Cron 触发消息规范
+## 日志
 
-**Job 消息必须包含 Skill 路径引用**：
+日志文件：`/root/.openclaw/logs/incubator.log`
 
-```
-请执行 ai-project-incubator skill（读取 /root/.openclaw/workspace/skills/ai-project-incubator/SKILL.md v2.0.0），通过 bash runner.sh 完成从市场调研到产品交付的完整孵化流程。技术栈：React+TS+Vite+Tailwind+Fastify，设计风格：Literary Dark。
-```
+记录内容：
+- Phase 开始/完成时间
+- 暂停开关 / 锁文件跳过事件
+- 能力边界警告
+- build/deploy 失败及重试
+- 自动化评分结果
 
-**重要**：禁止在 cron 消息里重写 SKILL.md 内容，执行指令必须引用 runner.sh。
-
----
-
-## 工作流程模板
-
-```
-## Day-N 孵化日志
-
-### Idea
-{Idea + 一句话描述}
-
-### 设计系统
-{token 数量 + 核心颜色 + 主要字体}
-
-### SPEC 摘要
-{核心功能列表（最多 5 条）}
-
-### 技术选型
-{为什么需要/不需要后端}
-
-### 开发状态
-- [x] Phase 0 预检 + 能力边界
-- [x] Phase 1 市场调研
-- [x] Phase 2 设计系统
-- [x] Phase 3 SPEC + Plan
-- [x] Phase 4 开发 + 部署
-
-### 问题与解决
-{遇到的问题及解决方案}
-
-### 简化决策（如有）
-{跳过某功能的原因}
-
-### 知识沉淀
-{建议追加到 KB.md 的内容}
-
-### 交付评分（自动化）
-{auto-score.sh 输出}
-
-### 交付地址
-
-项目名已知，直接构造生产 URL：
-
-```bash
-PROD_URL="https://openginko.tech/$PROJECT_NAME/"
-```
-
-**禁止使用 `http://localhost/` 或 `http://127.0.0.1/`**，所有报告必须使用生产域名。
+**禁止使用 `http://localhost/`**，所有报告必须使用生产域名 `https://openginko.tech/`。
