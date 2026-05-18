@@ -1,0 +1,9 @@
+{
+  "name": "project-name",
+  "tagline": "一句话描述（≤20字）",
+  "description": "详细描述",
+  "techStack": ["React", "TypeScript", "Tailwind"],
+  "features": ["功能1", "功能2"],
+  "incubatedAt": "2026-05-17",
+  "screenshot": "screenshot.png"
+}
