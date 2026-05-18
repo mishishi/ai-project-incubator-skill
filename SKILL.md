@@ -71,7 +71,6 @@ bash scripts/runner.sh {project-name} incubate
 ├── parse-access-log.sh     # 解析 nginx access.log
 ├── gen-stats.sh            # 生成 Showcase 统计 JSON
 ├── verify-page.js          # puppeteer 冒烟测试脚本（deploy.sh 调用）
-├── screenshot.sh            # （已废弃，不使用）
 └── package.json            # puppeteer 依赖（npm install 后使用）
 ```
 
