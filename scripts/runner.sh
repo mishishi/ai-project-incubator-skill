@@ -1,6 +1,6 @@
 #!/bin/bash
 # AI Project Incubator — Node Controller (验证型，非执行型)
-# Usage: bash runner.sh {project-name} {phase} {action}
+# Usage: bash scripts/runner.sh {project-name} {phase} [action]
 # 
 # 子 agent 负责所有创意工作（调研/设计/写代码）
 # runner.sh 只做质量验证和部署执行
