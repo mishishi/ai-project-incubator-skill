@@ -31,16 +31,16 @@ metadata:
 ## 命令参考
 
 ```bash
-# 子 agent 调用 runner.sh 驱动完整流程
-bash /root/.openclaw/workspace/skills/ai-project-incubator/scripts/runner.sh {project-name} setup
-bash /root/.openclaw/workspace/skills/ai-project-incubator/scripts/runner.sh {project-name} verify-phase1
-bash /root/.openclaw/workspace/skills/ai-project-incubator/scripts/runner.sh {project-name} verify-phase2
-bash /root/.openclaw/workspace/skills/ai-project-incubator/scripts/runner.sh {project-name} verify-phase3
-bash /root/.openclaw/workspace/skills/ai-project-incubator/scripts/runner.sh {project-name} build
-bash /root/.openclaw/workspace/skills/ai-project-incubator/scripts/runner.sh {project-name} deploy
+# 子 agent 调用 runner.sh 驱动完整流程（路径相对于 skill 根目录）
+bash scripts/runner.sh {project-name} setup
+bash scripts/runner.sh {project-name} verify-phase1
+bash scripts/runner.sh {project-name} verify-phase2
+bash scripts/runner.sh {project-name} verify-phase3
+bash scripts/runner.sh {project-name} build
+bash scripts/runner.sh {project-name} deploy
 
 # 一键孵化（完整流程，build 失败则 abort）
-bash /root/.openclaw/workspace/skills/ai-project-incubator/scripts/runner.sh {project-name} incubate
+bash scripts/runner.sh {project-name} incubate
 ```
 
 | 命令 | 验证内容 | 失败行为 |
