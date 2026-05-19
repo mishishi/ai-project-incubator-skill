@@ -24,10 +24,14 @@ const puppeteer = require('puppeteer');
         const text = msg.text();
         // Ignore resource loading errors (404s for images/fonts)
         if (text.includes('Failed to load resource') && text.includes('404')) return;
+        // Ignore connection refused — these are local dev services (Ollama etc.)
+        // not application errors
+        if (text.includes('ERR_CONNECTION_REFUSED') || text.includes('net::ERR_CONNECTION_REFUSED')) return;
         errors.push(text);
       }
     });
     page.on('pageerror', err => {
+      if (err.message.includes('ERR_CONNECTION_REFUSED')) return;
       errors.push(err.message);
     });
     
