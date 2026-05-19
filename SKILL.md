@@ -155,17 +155,25 @@ bash scripts/runner.sh {project-name} incubate
 3. 按自检清单逐项检查（6 项），最多 3 轮
 4. 输出 `design-system.md`
 
-**`design-system.md` 输出格式规范**——优先使用结构化格式，解析器优先匹配结构化：
+**`design-system.md` 输出格式规范**——优先使用结构化格式：
 
 ```markdown
 ## 关键决策
-风格: <风格名称>
-字体: 标题 <字体名 + fallback>
-字体: 正文 <字体名 + fallback>
-色彩: <色值> (<用途>)
+风格: Literary Dark
+色彩: #E07A3A（accent）/ #0F0F0E（背景）/ #33302A（边框）
+字体: 标题 Lora + 正文 Inter + 代码 Fira Code
+图标: Lucide Icons SVG（stroke-width: 2）
+圆角: 12px（按钮）/ 16px（卡片）
+动效: 200ms ease-out
 
 ## 设计方向
-**风格**: <风格名称>
+**风格**: Literary Dark
+
+## 组件规范
+### 按钮
+### 卡片
+### 输入框
+### 导航栏
 
 ## 色彩系统
 | Token | 色值 | 用途 |
@@ -173,14 +181,15 @@ bash scripts/runner.sh {project-name} incubate
 | `--color-bg` | `#0F0F0E` | 主背景 |
 
 ## 字体系统
-**标题字体**: <字体名 + fallback>
-**正文字体**: <字体名 + fallback>
-**代码字体**: <字体名 + fallback>
+**标题字体**: Lora, Georgia, serif
+**正文字体**: Inter, -apple-system, sans-serif
+**代码字体**: Fira Code, Consolas, monospace
 ```
 
 **格式要求**：
-- 必须包含 `## 关键决策` 一节，每行以 `key: value` 格式开头（解析器优先读取这个格式）
-- `字体:` 行可重复（标题/正文/代码各一行）
+- `## 关键决策` 一节：风格/色彩/字体/图标/圆角/动效，每行一个 key（解析器优先读取这个格式）
+- `## 组件规范`：列出所有设计的组件（按钮/卡片/表单/导航等）
+- 组件规范每节用 `### 组件名` 格式
 
 **格式要求**：
 - 必须有 `## 设计方向` 含风格名称
