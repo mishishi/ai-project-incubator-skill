@@ -307,7 +307,17 @@ bash scripts/runner.sh {project-name} incubate
 
 **⚠️ 禁止使用 playwright-mcp**（存在进程泄漏）
 
-完成后：curl 验证 `https://openginko.tech/{project-name}/` 返回 HTTP 200
+**部署后自检（强制）**：
+1. 运行 `node scripts/verify-page.js https://openginko.tech/{project-name}/`
+2. 根据 exit code 判断：
+   - exit 0 → 页面正常，无 JS 运行时错误
+   - exit 1 → 检测到 console error，**必须自行修复代码并重新 deploy**（最多重试 3 次）
+   - exit 2 → 网络或其他错误，间隔 5 秒重试
+3. 使用 puppeteer 或 curl 检查核心功能元素是否存在（按钮、表单等）
+4. 如果发现问题：修复 → 重新 build → 重新 deploy，直到自检全部通过
+5. 全部通过后报告最终状态（URL + 自检结果摘要）
+
+完成后报告：URL + 自检通过/失败 + 如有失败说明原因和修复尝试
 
 ---
 
