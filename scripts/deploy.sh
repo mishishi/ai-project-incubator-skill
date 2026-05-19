@@ -13,7 +13,7 @@ if [ -z "$PROJECT_NAME" ]; then
   exit 1
 fi
 
-PROJECT_DIR="$WORKSPACE/projects/$PROJECT_NAME"
+PROJECT_DIR="$WORKSPACE/projects/incubated/$PROJECT_NAME"
 
 if [ ! -d "$PROJECT_DIR/dist" ]; then
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] ERROR: dist/ not found, did build succeed?" >> "$LOGFILE"

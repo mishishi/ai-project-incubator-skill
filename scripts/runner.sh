@@ -32,7 +32,7 @@ if [ -z "$PROJECT_NAME" ] || [ -z "$PHASE" ]; then
   exit 1
 fi
 
-PROJECT_DIR="$WORKSPACE/projects/$PROJECT_NAME"
+PROJECT_DIR="$WORKSPACE/projects/incubated/$PROJECT_NAME"
 mkdir -p "$(dirname "$LOGFILE")"
 
 log() {
