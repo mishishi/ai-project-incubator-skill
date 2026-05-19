@@ -89,5 +89,6 @@ echo "]" >> "$OUTPUT"
 
 # Copy to nginx
 cp "$OUTPUT" /usr/share/nginx/html/showcase/projects.json
+cp "$OUTPUT" /usr/share/nginx/html/showcase/api/projects.json
 
 echo "Done: $OUTPUT"
