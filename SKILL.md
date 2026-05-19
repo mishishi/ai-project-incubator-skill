@@ -155,9 +155,15 @@ bash scripts/runner.sh {project-name} incubate
 3. 按自检清单逐项检查（6 项），最多 3 轮
 4. 输出 `design-system.md`
 
-**`design-system.md` 输出格式规范**：
+**`design-system.md` 输出格式规范**——优先使用结构化格式，解析器优先匹配结构化：
 
 ```markdown
+## 关键决策
+风格: <风格名称>
+字体: 标题 <字体名 + fallback>
+字体: 正文 <字体名 + fallback>
+色彩: <色值> (<用途>)
+
 ## 设计方向
 **风格**: <风格名称>
 
@@ -171,6 +177,10 @@ bash scripts/runner.sh {project-name} incubate
 **正文字体**: <字体名 + fallback>
 **代码字体**: <字体名 + fallback>
 ```
+
+**格式要求**：
+- 必须包含 `## 关键决策` 一节，每行以 `key: value` 格式开头（解析器优先读取这个格式）
+- `字体:` 行可重复（标题/正文/代码各一行）
 
 **格式要求**：
 - 必须有 `## 设计方向` 含风格名称
