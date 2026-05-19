@@ -263,10 +263,11 @@ bash scripts/runner.sh {project-name} incubate
 
 **子 agent 负责执行**：
 1. 开发核心功能（使用 design-system.md token）
-2. 调用 `bash runner.sh {project-name} build` — 构建 + 重试
-3. 调用 `bash runner.sh {project-name} deploy` — 部署 + HTTP 验证
+2. 调用 `bash runner.sh {project-name} build` — **只调用一次，不重复调用**
+3. 调用 `bash runner.sh {project-name} deploy` — **只调用一次，不重复调用**
+4. **禁止自行执行 `npm run build`、`mkdir`、`mv`、`cp` 等文件操作**，全部由 runner.sh 完成
 
-**build 失败则 abort**，不会继续 deploy。
+**build 失败则 abort，不会继续 deploy。**
 
 **⚠️ 禁止使用 playwright-mcp**（存在进程泄漏）
 
