@@ -75,6 +75,7 @@ setup() {
       done
       echo "$NEW_TOPIC" > "$TOPIC_LOG"
       log "TOPIC: Constrained to non-AI domain: $NEW_TOPIC"
+    # NOTE: Pass SESSION_ID as 4th arg from subagent: bash runner.sh {proj} {phase} {status} {SESSION_ID}
     fi
 
   if [ -d "$PROJECT_DIR" ]; then
