@@ -282,19 +282,62 @@ score() {
 }
 
 # ============================================================
-# Phase: notify - 发送通知
+# Phase: notify - 发送通知（模板化）
 # ============================================================
 notify() {
   local status="${3:-success}"
+  local PROJECT_DIR="$WORKSPACE/projects/$PROJECT_NAME"
 
   if [ "$status" = "success" ]; then
     log "NOTIFY: Sending success notification"
-    echo "新项目上线:$PROJECT_NAME" | send_to_wechat
-    echo "访问地址:https://openginko.tech/$PROJECT_NAME/" | send_to_wechat
+
+    # 收集数据
+    local HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "https://openginko.tech/$PROJECT_NAME/" 2>/dev/null || echo "000")
+    local TECH_STACK="—"
+    local TAGLINE="—"
+    if [ -f "$PROJECT_DIR/metadata.json" ]; then
+      TECH_STACK=$(python3 -c "import json; d=json.load(open('$PROJECT_DIR/metadata.json')); print(' · '.join(d.get('techStack',[])) or '—')" 2>/dev/null || echo "—")
+      TAGLINE=$(python3 -c "import json; d=json.load(open('$PROJECT_DIR/metadata.json')); print(d.get('tagline','—'))" 2>/dev/null || echo "—")
+    fi
+
+    # 提取五维评分
+    local DEPLOY_SCORE="—" META_SCORE="—" LOG_SCORE="—" DESIGN_SCORE="—" RESEARCH_SCORE="—"
+    if [ -f "$LOGFILE" ]; then
+      DEPLOY_SCORE=$(grep "部署稳定性" "$LOGFILE" | tail -1 | grep -oP '\d+\.\d+|\d+/3' | head -1 || echo "—")
+      LOG_SCORE=$(grep "中文本地化" "$LOGFILE" | tail -1 | grep -oP '\d+/3' | head -1 || echo "—")
+      DESIGN_SCORE=$(grep "设计一致性" "$LOGFILE" | tail -1 | grep -oP '\d+/3' | head -1 || echo "—")
+      META_SCORE=$(grep "功能完整度" "$LOGFILE" | tail -1 | grep -oP '\d+/3' | head -1 || echo "—")
+    fi
+
+    # 发送模板通知（ASCII box，避免 Unicode pipe 问题）
+    {
+      echo "========================================"
+      echo "[AI Incubator] 新项目孵化完成"
+      echo "========================================"
+      echo "项目名称: $PROJECT_NAME"
+      echo "一句话:   $TAGLINE"
+      echo "访问地址: https://openginko.tech/$PROJECT_NAME/"
+      echo "技术栈:   $TECH_STACK"
+      echo "----------------------------------------"
+      echo "质量评分（四维）:"
+      echo "  部署稳定性  $DEPLOY_SCORE"
+      echo "  功能完整度  $META_SCORE"
+      echo "  设计一致性  $DESIGN_SCORE"
+      echo "  中文本地化  $LOG_SCORE"
+      echo "========================================"
+      echo "HTTP 状态: $HTTP_CODE"
+      echo "孵化时间: $(date '+%Y-%m-%d %H:%M')"
+    } | send_to_wechat
+
   else
     log "NOTIFY: Sending failure notification"
-    echo "孵化任务异常:$PROJECT_NAME" | send_to_wechat
-    echo "请检查日志:$LOGFILE" | send_to_wechat
+    {
+      echo "[AI Incubator] 孵化任务异常"
+      echo "========================================"
+      echo "项目: $PROJECT_NAME"
+      echo "状态: 失败"
+      echo "请检查日志: $LOGFILE"
+    } | send_to_wechat
   fi
 }
 
