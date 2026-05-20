@@ -22,6 +22,8 @@ SCRIPT_DIR="/root/.openclaw/workspace/skills/ai-project-incubator/scripts"
 SKILL_DIR="/root/.openclaw/workspace/skills/ai-project-incubator"
 WORKSPACE="/root/.openclaw/workspace"
 LOGFILE="/root/.openclaw/logs/incubator.log"
+TOPIC_LOG="/root/.openclaw/logs/last_topic"
+TOPIC_POOL=(education design-tool productivity healthcare fintech game-dev dev-tool creative-tool collab data-viz lifestyle travel-tech green-tech music-tech home-tech)
 PROJECT_NAME="${1:-}"
 PHASE="${2:-}"
 ACTION="${3:-}"
@@ -64,6 +66,16 @@ incubate() {
 # ============================================================
 setup() {
   log "SETUP: Creating project from skeleton"
+    # 自动选择非 AI 领域词（禁重）
+    if [ -z "$TOPIC" ] && [ -n "$TOPIC_POOL" ]; then
+      local LAST_TOPIC=$(cat "$TOPIC_LOG" 2>/dev/null || echo "")
+      local NEW_TOPIC="${TOPIC_POOL[$((RANDOM % ${#TOPIC_POOL[@]}))]}"
+      while [ "$NEW_TOPIC" = "$LAST_TOPIC" ] && [ ${#TOPIC_POOL[@]} -gt 1 ]; do
+        NEW_TOPIC="${TOPIC_POOL[$((RANDOM % ${#TOPIC_POOL[@]}))]}"
+      done
+      echo "$NEW_TOPIC" > "$TOPIC_LOG"
+      log "TOPIC: Constrained to non-AI domain: $NEW_TOPIC"
+    fi
 
   if [ -d "$PROJECT_DIR" ]; then
     log "Project dir already exists, skipping setup"
